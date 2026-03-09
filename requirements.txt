@@ -1,0 +1,14 @@
+
+Django>=5.2,<6.0
+djangorestframework>=3.14,<4.0
+PyJWT>=2.9
+psycopg2-binary>=2.9
+django-cors-headers>=4.4
+whitenoise
+gunicorn
+dj-database-url
+djangorestframework-simplejwt
+channels>=4.0
+daphne>=4.0
+cloudinary
+django-cloudinary-storage
