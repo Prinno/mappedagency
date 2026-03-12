@@ -1,3 +1,5 @@
+import re
+
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -12,8 +14,10 @@ class UserSerializer(serializers.ModelSerializer):
             "full_name",
             "email",
             "phone_number",
+            "national_id",
             "role",
             "position",
+            "daily_target",
             "created_at",
             "updated_at",
             "is_active",
@@ -49,6 +53,7 @@ class ManagerCreateSerializer(serializers.ModelSerializer):
 
 class DataCollectorCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
+    national_id = serializers.CharField(required=True)
 
     class Meta:
         model = User
@@ -57,8 +62,21 @@ class DataCollectorCreateSerializer(serializers.ModelSerializer):
             "full_name",
             "email",
             "phone_number",
+            "national_id",
             "password",
+            "daily_target",
         ]
+
+    def validate_national_id(self, value: str) -> str:
+        """Validate national ID in the format 00000000-00000-00000-00."""
+
+        value = value.strip()
+        pattern = re.compile(r"^\d{8}-\d{5}-\d{5}-\d{2}$")
+        if not pattern.match(value):
+            raise serializers.ValidationError(
+                "National ID must be in the format 00000000-00000-00000-00"
+            )
+        return value
 
     def create(self, validated_data):
         request = self.context.get("request")
@@ -148,3 +166,24 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.set_password(new_password)
         user.save()
         return user
+
+
+class DataCollectorStatusSerializer(serializers.ModelSerializer):
+    """Serializer for managers to update collector status/target."""
+
+    class Meta:
+        model = User
+        fields = ["is_active", "daily_target"]
+
+
+class DataCollectorPasswordResetSerializer(serializers.Serializer):
+    """Serializer used by managers to reset a collector's password."""
+
+    new_password = serializers.CharField(write_only=True, min_length=8)
+
+    def save(self, **kwargs):
+        collector: User = self.context["collector"]
+        new_password = self.validated_data["new_password"]
+        collector.set_password(new_password)
+        collector.save()
+        return collector

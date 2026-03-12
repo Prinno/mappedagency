@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-77tbxlrwa5rg*w@dhn)9$)4^+b@7rl=$(s3kx=^v=^n6!v!)tg
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# ALLOWED_HOSTS = ["localhost", "127.0.0.1", "192.168.1.189"]
+# ALLOWED_HOSTS = ["localhost", "127.0.0.1", "192.168.1.190"]
 ALLOWED_HOSTS = ['*']
 
 # Application definition
@@ -185,8 +185,8 @@ REST_FRAMEWORK = {
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=30),   # token itadumu siku 30
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),  # refresh token pia siku 30
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),

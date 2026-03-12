@@ -8,6 +8,8 @@ from .views import (
     DataCollectionRecordManagerListView,
     DataCollectorDetailView,
     DataCollectorListCreateView,
+    DataCollectorPasswordResetView,
+    DataCollectorStatusUpdateView,
     LoginView,
     LogoutView,
     MeView,
@@ -26,6 +28,16 @@ urlpatterns = [
     path("data-collectors/create/", DataCollectorListCreateView.as_view(), name="data-collector-create"),
     path("data-collectors/", DataCollectorListCreateView.as_view(), name="data-collector-list"),
     path("data-collectors/<int:pk>/", DataCollectorDetailView.as_view(), name="data-collector-detail"),
+    path(
+        "data-collectors/<int:pk>/status/",
+        DataCollectorStatusUpdateView.as_view(),
+        name="data-collector-status",
+    ),
+    path(
+        "data-collectors/<int:pk>/reset-password/",
+        DataCollectorPasswordResetView.as_view(),
+        name="data-collector-reset-password",
+    ),
     path("data-collection-records/", DataCollectionRecordListCreateView.as_view(), name="data-collection-records"),
     path(
         "data-collection-records/manager/",

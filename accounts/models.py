@@ -47,6 +47,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     full_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True, null=True, blank=True)
     phone_number = models.CharField(max_length=32, unique=True, null=True, blank=True)
+    national_id = models.CharField(max_length=32, unique=True, null=True, blank=True)
     role = models.CharField(max_length=32, choices=Role.choices)
     position = models.CharField(max_length=255, null=True, blank=True)
     manager = models.ForeignKey(
@@ -60,6 +61,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+
+    # Daily target for this data collector (number of agents per day).
+    # For managers/super admins this field is unused but kept for simplicity.
+    daily_target = models.PositiveIntegerField(default=100)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
