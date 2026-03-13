@@ -110,3 +110,23 @@ class DataCollectionRecord(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         return self.title
+
+
+class DailyCollectorSummary(models.Model):
+    """Tracks that a daily summary email was sent for a collector on a given date."""
+
+    collector = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="daily_summaries",
+        limit_choices_to={"role": User.Role.DATA_COLLECTOR},
+    )
+    date = models.DateField()
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("collector", "date")
+        ordering = ["-date", "-sent_at"]
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"Summary {self.date} for {self.collector_id}"

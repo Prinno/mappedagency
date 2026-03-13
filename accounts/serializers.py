@@ -4,6 +4,31 @@ from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User, DataCollectionRecord
+from .emails import send_data_collector_welcome_email
+
+
+def _normalize_tz_phone(value: str) -> str:
+  """Normalize Tanzanian phone numbers to 0712345678 format.
+
+  Accepts inputs like '+255712345678', '255712345678', '0712345678', or with spaces,
+  and returns a 10-digit string starting with '0'.
+  """
+
+  if not value:
+      return value
+
+  digits = re.sub(r"\D", "", value)
+
+  # International form 2557XXXXXXXX -> 07XXXXXXXX
+  if digits.startswith("255") and len(digits) == 12:
+      digits = "0" + digits[3:]
+
+  # Already local 07XXXXXXXX
+  if digits.startswith("0") and len(digits) == 10:
+      return digits
+
+  # If it doesn't match expected pattern, return as-is so validation can handle it
+  return digits
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -41,6 +66,9 @@ class ManagerCreateSerializer(serializers.ModelSerializer):
             "position",
         ]
 
+    def validate_phone_number(self, value: str) -> str:
+        return _normalize_tz_phone(value)
+
     def create(self, validated_data):
         password = validated_data.pop("password")
         user = User(**validated_data)
@@ -67,6 +95,9 @@ class DataCollectorCreateSerializer(serializers.ModelSerializer):
             "daily_target",
         ]
 
+    def validate_phone_number(self, value: str) -> str:
+        return _normalize_tz_phone(value)
+
     def validate_national_id(self, value: str) -> str:
         """Validate national ID in the format 00000000-00000-00000-00."""
 
@@ -88,6 +119,8 @@ class DataCollectorCreateSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.is_active = True
         user.save()
+        # Send automatic welcome email with login credentials and target
+        send_data_collector_welcome_email(user, password)
         return user
 
 

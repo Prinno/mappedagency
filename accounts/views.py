@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken, TokenError
 
-from .models import User, DataCollectionRecord
+from .models import User, DataCollectionRecord, DailyCollectorSummary
 from .permissions import IsSuperAdmin, IsManager, IsDataCollector
 from .serializers import (
     ChangePasswordSerializer,
@@ -22,6 +22,10 @@ from .serializers import (
     LoginSerializer,
     ManagerCreateSerializer,
     UserSerializer,
+)
+from .emails import (
+    send_daily_target_updated_email,
+    send_daily_review_summary_email,
 )
 
 
@@ -121,6 +125,16 @@ class DataCollectorStatusUpdateView(generics.UpdateAPIView):
             return User.objects.filter(role=User.Role.DATA_COLLECTOR, manager=user)
         return User.objects.none()
 
+    def perform_update(self, serializer):
+        collector: User = self.get_object()
+        old_target = collector.daily_target
+        updated_collector = serializer.save()
+        new_target = updated_collector.daily_target
+
+        # If the daily target changed, notify the data collector by email
+        if new_target != old_target:
+            send_daily_target_updated_email(updated_collector, old_target, new_target)
+
 
 class DataCollectionRecordListCreateView(generics.ListCreateAPIView):
     serializer_class = DataCollectionRecordSerializer
@@ -169,6 +183,54 @@ class DataCollectionRecordDetailView(generics.RetrieveUpdateAPIView):
                 "collector", "collector__manager"
             )
         return DataCollectionRecord.objects.none()
+
+    def perform_update(self, serializer):
+        """After status update, send daily summary email when all for the day are reviewed."""
+
+        record: DataCollectionRecord = self.get_object()
+        updated_record: DataCollectionRecord = serializer.save()
+
+        # Only act when status actually changes and is no longer pending
+        if updated_record.status == DataCollectionRecord.Status.PENDING:
+            return
+
+        collector = updated_record.collector
+        created_date = updated_record.created_at.date()
+
+        # Check if we already sent a summary for this collector/day
+        already_sent = DailyCollectorSummary.objects.filter(
+            collector=collector,
+            date=created_date,
+        ).exists()
+        if already_sent:
+            return
+
+        # Check if all records for this collector on that date are non-pending
+        day_records = DataCollectionRecord.objects.filter(
+            collector=collector,
+            created_at__date=created_date,
+        )
+        if not day_records.exists():
+            return
+
+        if day_records.filter(status=DataCollectionRecord.Status.PENDING).exists():
+            # Manager has not finished reviewing all agents for that day yet.
+            return
+
+        approved_count = day_records.filter(status=DataCollectionRecord.Status.APPROVED).count()
+        rejected_count = day_records.filter(status=DataCollectionRecord.Status.REJECTED).count()
+
+        # Send summary email and record that it was sent
+        send_daily_review_summary_email(
+            collector=collector,
+            summary_date=created_date,
+            approved_count=approved_count,
+            rejected_count=rejected_count,
+        )
+        DailyCollectorSummary.objects.create(
+            collector=collector,
+            date=created_date,
+        )
 
 
 class DataCollectionRecordExportView(APIView):
