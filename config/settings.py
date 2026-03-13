@@ -26,8 +26,8 @@ SECRET_KEY = "django-insecure-77tbxlrwa5rg*w@dhn)9$)4^+b@7rl=$(s3kx=^v=^n6!v!)tg
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "192.168.1.190"]
-# ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS = ["localhost", "127.0.0.1", "192.168.1.190"]
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -87,24 +87,24 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': dj_database_url.parse(
-#         os.environ.get('DATABASE_URL'),
-#         conn_max_age=600,
-#         ssl_require=True,
-#     )
-# }
-
 DATABASES = {
-    "default": {
-        "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.postgresql"),
-        "NAME": os.environ.get("DB_NAME", "agencymapped"),
-        "USER": os.environ.get("DB_USER", "postgres"),
-        "PASSWORD": os.environ.get("DB_PASSWORD", "Inno-997"),
-        "HOST": os.environ.get("DB_HOST", "localhost"),
-        "PORT": os.environ.get("DB_PORT", "5432"),
-    }
+    'default': dj_database_url.parse(
+        os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+        ssl_require=True,
+    )
 }
+
+# DATABASES = {
+#     "default": {
+#         "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.postgresql"),
+#         "NAME": os.environ.get("DB_NAME", "agencymapped"),
+#         "USER": os.environ.get("DB_USER", "postgres"),
+#         "PASSWORD": os.environ.get("DB_PASSWORD", "Inno-997"),
+#         "HOST": os.environ.get("DB_HOST", "localhost"),
+#         "PORT": os.environ.get("DB_PORT", "5432"),
+#     }
+# }
 
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
